@@ -1,0 +1,192 @@
+body {
+  background-color: #f3f3f3;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 25px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0px 0px 10px #ccc;
+}
+
+.title {
+  text-align: center;
+  color: #1a3a5d;
+  margin-bottom: 24px;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 6px;
+  padding: 16px 0;
+  
+  transition: background 0.4s, color 0.4s, box-shadow 0.4s;
+}
+
+.title:hover {
+  color: #007BFF;
+}
+
+.form input,
+.form select {
+  width:min-content + 10px;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  margin-right: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+}
+
+.form input:hover,
+.form select:hover{
+  background-color: #f3f3f3;
+}
+
+.radio-group {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+}
+
+.auto-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.5s;
+  
+}
+
+.auto-btn:hover {
+  background-color: #0056b3;
+  scale: 0.99;
+}
+
+.success {
+  margin-top: 15px;
+  color: green;
+  font-weight: bold;
+  text-align: center;
+}
+
+.error {
+  margin-top: 15px;
+  color: red;
+  font-weight: bold;
+  text-align: center;
+}
+
+.manual-btn{
+  width: 100%;
+  padding: 12px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.4s;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.manual-btn:hover{
+  background-color: hsl(211, 100%, 35%);
+
+  scale: 1.02; 
+}
+
+.radio-btn:hover {
+  box-shadow: 0 0 8px 2px #e0eaf4, 0 0 16px 4px #dfe3edaa;
+}
+
+.title-res {
+  text-align: center;
+  color: #0ada64;
+  margin-bottom: 20px;
+  border: #0ada64;
+  border-radius: 2px solid;
+
+}
+
+.title-csv{
+  text-align: left;
+  color: #5c645f;
+  margin-bottom: 20px;
+  font-size: large;
+  transition: all 0.5s;
+  width: fit-content;
+}
+.title-csv:hover{
+  color: #1b1c1b;
+
+}
+
+.csv-input {
+  display: inline-block;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-family: inherit;
+  background-color: #f9fafb;
+  color: #2D241F;
+  cursor: pointer;
+  transition: all 0.4s ease-in-out;
+  margin-bottom: 8px;
+}
+
+.csv-input:hover {
+  background-color: #dce0ec;
+  scale: 1.03;
+}
+
+.route-btn{
+  background-color: #0ada64;
+  max-width: fit-content;
+  color: #fff;
+  padding: 12px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.4s;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.route-btn:hover {
+  background-color: #0ac25a;
+
+  scale: 1.03;
+  }
+.back-btn {
+  display: inline-block;
+  width: fit-content;
+  padding: 12px 28px;
+  background-color: #0ada64;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 8px rgba(10, 218, 100, 0.1);
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.back-btn:hover {
+  background-color: #0ac25a;
+  transform: scale(1.03);
+}
