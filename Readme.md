@@ -30,25 +30,30 @@ SAP automation is designed to:
 
 ## 🧩 Project Structure
 ```
-SAP AUTO PRODUCTION/
+SAP-Production-Automation-and-Material-Reservation/
 │
-├── backend/
-│ ├── main.py # Flask / FastAPI backend entry
-│ ├── sap_processor.py # SAP GUI automation logic
-│ ├── getExcel.py # Excel reader for production/reservation data
-│ ├── requirements.txt # Python dependencies
+├── Material Reservation with CSV/
+│   ├── Book1.csv                # Example CSV for material reservation
+│   ├── ProcessOrder.py          # Main SAP automation logic for CO11N
+│   ├── app.py                   # Flask API backend server
+│   ├── connectSAP.py            # SAP GUI connection setup
+│   ├── enterOrderNumber.py      # Logic to enter production order number
+│   ├── gotoCode.py              # Function to navigate to CO11N transaction
+│   ├── orderNumber.py           # Helper functions for order management
+│   └── test.py                  # Testing and debugging scripts
 │
-├── frontend/
-│ ├── src/
-│ │ ├── components/
-│ │ ├── pages/
-│ │ └── App.js # React frontend for file upload & execution
-│ ├── package.json
-│
-└── README.md
-```
+└── frontend/
+    ├── public/                  # Static assets for React app
+    └── src/
+        ├── App.css              # Global styles
+        ├── App.jsx              # Root React component
+        ├── App.test.js          # Jest test file
+        ├── Batch.jsx            # Component for Material Reservation page
+        ├── PrdOrder.jsx         # Component for Production Order Confirmation page
+        ├── index.css            # Base styling
+        └── index.js             # React DOM entry point
 
----
+```
 
 ## 🖥️ Tech Stack
 
