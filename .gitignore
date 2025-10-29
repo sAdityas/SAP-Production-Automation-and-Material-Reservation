@@ -43,6 +43,7 @@ var/
 #  Usually creates a 'dist' and 'build' folder
 *.manifest
 *.spec
+test.py
 
 # Installer logs
 pip-log.txt
@@ -110,3 +111,7 @@ secrets.json
 instance/
 *.db
 *.sqlite3
+
+# Custom user folders to ignore
+Test/
+instance/

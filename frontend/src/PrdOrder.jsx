@@ -13,6 +13,7 @@ const PrdOrder = () => {
   const [response, setResponse] = useState(null);
   const [error, setError] = useState('');
   const [availableOperations, setAvailableOperations] = useState([]);
+  const [material, setMaterial] = useState([])
   const navigate = useNavigate();
 
   // Function to handle form submission
@@ -40,11 +41,12 @@ const PrdOrder = () => {
       else {
         setAvailableOperations([]);
       }
-      setResponse(res.data.message);
+      setResponse(res.data.message.status +' for order number ' + res.data.order_number);
+      setMaterial(res.data.message.material)
 
-      setTimeout(() => {
-        window.location.reload();
-      },3000);
+      // setTimeout(() => {
+      //   window.location.reload();
+      // },3000);
     } catch (err) {
       setError(err.response?.data?.error);
     }
@@ -150,6 +152,16 @@ const btchDtr = (e) => {
       </form>
 
       {response && <div className="success">{response}</div>}
+      {
+        material ? (
+          material.map((mats,idx) => (
+            <div key={idx}>
+              <h3>Material With No Batch :</h3>
+              <p><span>{idx +1+"."} {" "}</span>{mats}</p>  
+            </div>
+          ))
+        ) : null
+      }
       {error && <div className="error">{error}</div>}
       <div>
         <button className='route-btn' type='submit' onClick={btchDtr}>Material Reservation</button>

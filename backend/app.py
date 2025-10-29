@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import win32com.client
 import time
-import pythoncom
 import pandas as pd
-import socket
+
+from connectSAP import connect_to_sap
+from ProcessOrder import process_order
+from gotoCode import gotoCO11N
+from enterOrderNumber import enterNumber
 
 app = Flask(__name__)
 CORS(app)
@@ -17,149 +19,7 @@ CYAN = '\033[36m'
 RESET = '\033[0m'
 
 
-session = None
-
-
-
-def connect_to_sap():
-    global session
-    pythoncom.CoInitialize()  # Initialize COM library for this thread
-    try:
-        SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(0)
-        session = connection.Children(0)
-        print("[INFO] Connected to SAP session.")
-        
-        return session
-    except Exception as e:
-        raise ConnectionError(f"Could not connect to SAP GUI: ")
-
-
-def process_order(order_number, shift, quantity, operation_type, operation=None):
-    connect_to_sap()
-
-    session.findById("wnd[0]").maximize()
-    session.findById("wnd[0]/tbar[0]/okcd").text = "/nCO11N"
-    session.findById("wnd[0]").sendVKey(0)
-    time.sleep(0.5)
-
-    session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-AUFNR").text = order_number
-    session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").setFocus()
-    session.findById("wnd[0]").sendVKey (4)
-
-    
-    time.sleep(0.5)
-    
-    count = 0
-    
-    for i in range(50):
-        try:
-            shell = session.findById(f"wnd[1]/usr/sub/1[0]/sub/1/2[0]/sub/1/2/15[0,15]/lbl[1,{i}]")
-            count += 1
-            process = ''
-            process = shell.Text
-            
-        except Exception:
-            # Element with this index does not exist
-            continue
-    session.findById("wnd[1]/tbar[0]/btn[12]").press()
-
-        
-    
-    row_count = count + 1
-    print(row_count)
-    last_row = row_count
-    first_row = 0
-    print(f"[INFO] Last row: {last_row}, First row: {first_row}")
-
-    if operation_type == 'A':
-        if row_count == 0:
-            raise ValueError("No operations found in the order.")
-        last_row = count - 1
-        try:
-            session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").caretPosition = 0
-            session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").text = process
-            session.findById('wnd[0]').sendVKey(0)
-        except:
-            print()
-        is_last = True
-        raise ValueError("Invalid operation type")
-    qty_field = session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_DET1:SAPLCORU_S:0200/txtAFRUD-LMNGA")
-    qty_field.text = quantity
-    qty_field.setFocus()
-    session.findById("wnd[0]/tbar[1]/btn[18]").press()
-    session.findById("wnd[0]").sendVKey(0)
-    try:
-        session.findById("wnd[1]").sendVKey(0)  
-    except:
-        pass
-    time.sleep(0.5)
-
-    shift_combo = session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_DET2:SAPLCORU_S:0910/subSLCUST:SAPLXCOF:0910/cmbAFRUD-SHIFT")
-    print(f"[INFO] Setting shift to {shift}")
-    shift_combo.key = shift
-    
-    session.findById("wnd[0]").sendVKey(0)
-    print(f"success")
-    session.findById("wnd[0]/tbar[1]/btn[18]").press()
-    
-    
-    time.sleep(0.5)
-
-    if operation_type == 'A':
-        time.sleep(0.5)
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnMALL").press()
-        
-        time.sleep(0.5)
-        session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500").getAbsoluteRow(0).selected = False
-        session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-MATNR[0,0]").setFocus()
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
-        
-        time.sleep(3)
-        time.sleep(0.5)
-    elif operation_type == 'B':
-        time.sleep(0.5)
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnMALL").press()
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
-
-        time.sleep(0.5)
-    elif operation_type == 'B' and is_last:
-        time.sleep(0.5)
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnMALL").press()
-        time.sleep(0.5)
-        session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500").getAbsoluteRow(0).selected = False
-        session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-MATNR[0,0]").setFocus()
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
-        
-        time.sleep(0.5)
-
-    
-    session.findById("wnd[0]/tbar[0]/btn[11]").press()
-    
-    for _ in range(3):
-        try:
-            time.sleep(2)
-            jsonify({'status':"[INFO] Attempting to handle confirmation dialog..."})
-            session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
-            time.sleep(0.5)
-            session.findById("wnd[1]/usr/btnBUTTON_1").press()
-            time.sleep(0.5)
-            session.findById("wnd[1]/tbar[0]/btn[0]").press()
-        except:
-            pass
-    status_bar_text = session.findById("wnd[0]/sbar").Text
-        
-            
-    words = status_bar_text.split()
-    
-    # Look for the first word that looks like a document number (all digits)
-    for word in words:
-        if word.isdigit() and len(word) >= 10:
-            vf = word
-
-    return f"Order {order_number} processed successfully Document Number generated {vf}"
-
+session = connect_to_sap()
 
 @app.route("/process", methods=["POST"])
 def process():
@@ -170,7 +30,7 @@ def process():
         quantity = data.get("quantity")
         operation_type = data.get("operation_type")
         operation = data.get("operation")
-
+        print(data)
         if not all([order_number, shift, quantity, operation_type]):
             return jsonify({"error": "Missing required fields"}), 400
 
@@ -183,6 +43,7 @@ def process():
         }), 200
 
     except Exception as e:
+        print(e)
         return jsonify({"Error ": "Invalid Order Number"}), 500
 
 
@@ -191,32 +52,51 @@ def get_operations():
     try:
         data = request.json
         order_number = data.get("order_number")
-        connect_to_sap()
-        session.findById("wnd[0]").maximize()
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/nCO11N"
-        session.findById("wnd[0]").sendVKey(0)
-        time.sleep(0.5)
+        session =connect_to_sap()
+
+        gotoCO11N()
 
         # Input order number
-        session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-AUFNR").text = order_number
-        session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").setFocus()
-        session.findById("wnd[0]").sendVKey(4)
+        enterNumber(order_number)
         time.sleep(0.5)
         ops = []
         count = 0
-        for i in range(3,50): 
+
+        shell = session.findById("wnd[1]/usr/cntlCUSTOM_CONTAINER/shellcont/shell")
+        row_count = shell.RowCount
+        print(f"Total rows found: {row_count}")
+        for i in range(row_count):
             try:
-                shell = session.findById(f"wnd[1]/usr/sub/1[0]/sub/1/2[0]/sub/1/2/15[0,15]/lbl[1,{i}]")
-                shell.setFocus()
-                ops.append(shell.Text)
-                print(ops)
-                count += 1
+                time.sleep(0.2)
+                # Read value from specific column (e.g., "VORNR" or "ARBPL" etc.)
+                process_text = shell.GetCellValue(i, "F0001")  # <-- Change column name
+                ops.append(process_text)
+                print(f"Row {i}: {process_text}")
+
             except Exception as e:
-                break  # Stop if no more operations are found
+                print(f"Error on row {i}: {e}")
+                continue
+
+        # Close the popup
+        session.findById("wnd[1]/tbar[0]/btn[12]").press()
+
+        # for i in range(3,50): 
+        #     try:
+        #         shell = session.findById(f"wnd[1]/usr/sub/1[0]/sub/1/2[0]/sub/1/2/15[0,15]/lbl[1,{i}]")
+        #         shell.setFocus()
+        #         ops.append(shell.Text)
+        #         print(ops)
+        #         count += 1
+        #     except Exception as e:
+        #         break  # Stop if no more operations are found
+        # if not ops:
+        #     raise Exception("No operations available")
+        # return jsonify({"operations": ops}), 200
+
         if not ops:
             raise Exception("No operations available")
         return jsonify({"operations": ops}), 200
-    
+
     except Exception as e:
         return jsonify({"error": "Error while getting Operations check SAP."}), 500
 
@@ -270,7 +150,8 @@ def btchDtr():
         while idx < total_materials:
             end_idx = min(idx + batch_size, total_materials)
             for row in range(idx, end_idx):
-                row_offset = row - idx  # SAP row index for this batch (0 to 13)
+                row_offset = row - idx  
+                # SAP row index for this batch (0 to 13)
                 # Iterate through rows, not columns. row_offset is the SAP row index, 7 is the column for Material.
                 session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-MATNR[{row_offset},7]").text = materials[row]
                 session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/txtRESB-ERFMG[{row_offset},48]").text = qty[row]
