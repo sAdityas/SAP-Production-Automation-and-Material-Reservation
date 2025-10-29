@@ -29,7 +29,7 @@ SAP automation is designed to:
 ---
 
 ## 🧩 Project Structure
-
+```
 SAP AUTO PRODUCTION/
 │
 ├── backend/
@@ -46,7 +46,7 @@ SAP AUTO PRODUCTION/
 │ ├── package.json
 │
 └── README.md
-
+```
 
 ---
 
