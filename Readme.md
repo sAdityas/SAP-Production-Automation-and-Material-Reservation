@@ -75,14 +75,14 @@ SAP AUTO PRODUCTION/
 ```bash
 pip install -r requirements.txt
 ```
-3️⃣ Run Backend
+### 3️⃣ Run Backend
 ```bash
 python main.py
 ```
 
 Server runs at → http://localhost:5050
 
-4️⃣ Run Frontend
+### 4️⃣ Run Frontend
 ```bash
 npm install
 npm start
@@ -91,7 +91,7 @@ npm start
 
 Frontend runs at → http://localhost:3000
 
-🔁 Example Workflow
+# 🔁 Example Workflow
 
 Upload Excel file containing Production Order Numbers
 
@@ -105,7 +105,7 @@ Creates Material Reservations if required (MB21)
 
 Logs results & status to Excel or console
 
-🧠 Key Python Functions
+# 🧠 Key Python Functions
 
 launch_transaction(code) → Opens SAP T-code
 
@@ -117,18 +117,16 @@ reserve_materials(order) → Creates reservation document
 
 log_results() → Writes success/failure logs
 
-🔒 Security Notes
+# 🔒 Security Notes
 
 Never commit your SAP credentials or tokens to GitHub.
 
 Use .env file or Windows Credential Manager for sensitive data.
 
-📄 License
+# 📄 License
 
 This project is licensed under the MIT License — free for personal and commercial use.
 
-👨‍💻 Author
-
-Aditya Sarkale
-💼 GitHub: @sAdityas
-💡 Passionate about SAP automation, integration, and AI-driven process optimization.
+### 👨‍💻 Author Aditya Sarkale
+### 💼 GitHub: @sAdityas
+### 💡 Passionate about SAP automation, integration, and AI-driven process optimization.
