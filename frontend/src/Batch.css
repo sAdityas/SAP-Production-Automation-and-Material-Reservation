@@ -1,0 +1,206 @@
+.container-btch{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+
+}
+
+.container-form{
+    display: grid;
+    height: 45vh;
+    min-height: 40vh;
+    max-height: 45vh;
+    width: 40vw;
+    min-width: 35vw;
+    max-width: 40vw;
+    grid-template-areas: 
+    'title-container title-container'
+    'file-container file-container'
+    'res-container res-container';
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    background: rgba(255, 255, 255, 0.6);
+    /* backdrop-filter: blur(4px); */
+    box-shadow: 1px #6f3345;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.title-container{
+    grid-area: title-container;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-container h1{
+    font-family: monospace;
+    font-weight: 500;
+    color:#484444;
+}
+
+.file-container{
+    grid-area: file-container;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+}
+
+.fileSelect{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    margin: 1vw ;
+}
+
+.fileSelect h2{
+    font-family: monospace;
+    font-weight: 500;
+    color:#484444;
+}
+
+.fileSelect input[type='file']{
+    border:1px solid #333;
+    padding:0.52em;
+    border-radius: 10px;
+    
+}
+input[type="file"]::file-selector-button {
+  background-color: #007bff;
+  font-family: monospace;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.51em;
+  cursor: pointer;
+  transition: background-color 0.3s;}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: #0056b3;
+}
+
+.button-container{
+    grid-area: button-container;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.button-container button{
+    margin: 0.7em;
+    width: 8em;
+    min-width: 5em;
+    max-width: 9em;
+    color:white;
+    font-family: monospace;
+    font-weight: lighter;
+    font-size: medium;
+    background: #1065c6;
+    border: 0.5px solid gray;
+    padding: 0.7vw;
+    border-radius: 5px;
+}
+
+.button-container .back-btn{
+    background-color: transparent;
+    color:rgb(68, 64, 64);
+}
+
+.button-container .back-btn:hover{
+    transition: all 0.3s linear;
+    background-color: #eeedf4;
+}
+
+.button-container .submit:active{
+    transition: all 0.3s ;
+    transform: scale(0.85);
+}
+.button-container .back-btn:active{
+    transition: all 0.3s ;
+    transform: scale(0.85);
+}
+.back-btn.loading{
+    transition: all 0.6s linear;
+    background-color: #cbcad1;
+    cursor:not-allowed;
+}
+
+.button-container .submit:hover{
+    transition: all 0.6s ease;
+    background: #0c488c;
+}
+
+.button-container .submit.submitted{
+    background: #063265;
+    cursor: not-allowed;
+}
+
+
+.res-container{
+    grid-area: res-container;
+    height: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.success{
+    margin-top: 2px;
+    font-size: 1.35em;
+    color: green;
+    font-weight: bold;
+    text-align: center;
+    font-family: monospace;
+}
+
+.error{
+    margin-top: 1px;
+    font-size: 1.35em;  
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    font-family: monospace;
+}
+
+.noDis{
+    display: none;
+    margin-top: -1em;
+}
+
+.breaker {
+    height: 1.5px;
+    width: 100%;
+    display: block;
+    position: relative;
+    background-color: rgb(200, 188, 188);
+  }  .loader span {
+    opacity: 0;
+    animation: loading 1.5s infinite;
+  }
+  
+  .loader span:nth-child(1) {
+    animation-delay: 0s;
+  }
+  
+  .loader span:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+  
+  .loader span:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+  
+  @keyframes loading {
+    0%, 20% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+  }

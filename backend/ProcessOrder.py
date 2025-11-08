@@ -3,34 +3,38 @@ import time
 from flask import jsonify
 
 
-from orderNumber import OrderNumber 
 from gotoCode import gotoCO11N
 from enterOrderNumber import enterNumber
-from flask import request, jsonify
+from getStatusText import status_text
+
 
 
 
 
 def process_order(order_number, shift, quantity, operation_type, operation=None):
 
+    # Get the session variable 
     session = connect_to_sap()
+
+    # Go to CO11N T-Code
     gotoCO11N()
 
+    # Go to Enter Order Number    
     enterNumber(order_number)
     
-    time.sleep(0.5)
+    time.sleep(0.2)
     
     count = 0
     process = []
 
+    # Getting the Shell to count the rows and get operation
     shell = session.findById("wnd[1]/usr/cntlCUSTOM_CONTAINER/shellcont/shell")
     row_count = shell.RowCount
     print(f"Total rows found: {row_count}")
     for i in range(row_count):
         try:
             time.sleep(0.2)
-            # Read value from specific column (e.g., "VORNR" or "ARBPL" etc.)
-            process_text = shell.GetCellValue(i, "F0001")  # <-- Change column name
+            process_text = shell.GetCellValue(i, "F0001") 
             process.append(process_text)
             print(f"Row {i}: {process_text}")
 
@@ -54,13 +58,15 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
     
     session.findById("wnd[1]/tbar[0]/btn[12]").press()
         
-    
+    # Look for last row
+
     row_count = count + 1
     print(row_count)
     last_row = row_count
     first_row = 0
     print(f"[INFO] Last row: {last_row}, First row: {first_row}")
 
+    # Operation TYPE
     if operation_type == 'A':
         if row_count == 0:
             raise ValueError("No operations found in the order.")
@@ -68,7 +74,6 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         try:
             print(process[len(process) - 1])
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").setFocus()
-            time.sleep(2)
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").caretPosition = 0
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").text = process[len(process) - 1]
             session.findById('wnd[0]').sendVKey(0)
@@ -81,16 +86,15 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         try:
             print(operation)
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").setFocus()
-            time.sleep(2)
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").caretPosition = 0
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").text = operation
             session.findById('wnd[0]').sendVKey(0)
          
         except:
-            print()
             is_last = True
             raise ValueError("Invalid operation type")   
-    
+    # Setting Qty
+
     qty_field = session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_DET1:SAPLCORU_S:0200/txtAFRUD-LMNGA")
     qty_field.setFocus()
     qty_field.text = quantity
@@ -100,7 +104,8 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         session.findById("wnd[1]").sendVKey(0)  
     except:
         pass
-
+    
+    # Setting Shift
     shift_combo = session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_DET2:SAPLCORU_S:0910/subSLCUST:SAPLXCOF:0910/cmbAFRUD-SHIFT")
     print(f"[INFO] Setting shift to {shift}")
     shift_combo.key = shift
@@ -110,10 +115,8 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         session.findById("wnd[1]").sendVKey(0)  
     except:
         pass
-    
-    time.sleep(0.5)
+    time.sleep(0.2)
     try:
-        
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/tbar[1]/btn[18]").setFocus()
         session.findById("wnd[0]/tbar[1]/btn[18]").press()
@@ -121,54 +124,70 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(18)
         session.findById("wnd[0]").sendVKey(18)
-    
-    time.sleep(0.5)
+    time.sleep(0.2)
+
+    # Operation Type
 
     if operation_type == 'A':
-        time.sleep(0.5)
+        time.sleep(0.2)
         session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnMALL").press()
-        time.sleep(0.5)
+        time.sleep(0.2)
         session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500").getAbsoluteRow(0).selected = False
         session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-MATNR[0,0]").setFocus()
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
-        time.sleep(0.5)
+       
+        time.sleep(0.2)
     elif operation_type == 'B':
-        time.sleep(0.5)
+        time.sleep(0.2)
         session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnMALL").press()
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
-        time.sleep(0.5)
+        time.sleep(0.2)
     elif operation_type == 'B' and is_last:
-        time.sleep(0.5)
+        time.sleep(0.2)
         session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnMALL").press()
-        time.sleep(0.5)
+        time.sleep(0.2)
         session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500").getAbsoluteRow(0).selected = False
         session.findById("wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-MATNR[0,0]").setFocus()
-        session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
-        
-    time.sleep(0.5)
+    time.sleep(0.2)
+
+    # Count Variable
     c = 0
+
+    # Batch Determination
+
+    session.findById("wnd[0]/usr/subPUSHBUTTON:SAPLCOWB:0400/btnCHFI").press()
+
+    # Status Bar Text
+    try:
+        errorMessage = status_text()
+    except:
+        pass
+    
+    # Count if materials
     for i in range(50):
         materialCell = session.findById(f"wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-MATNR[0,{i}]")
         if materialCell.Text == "" or materialCell.Text == None:
             break 
         materialCell.setFocus()
         c+= 1
+
+    # No batch Material Array
     noBatchMat = []
-    for i in range(0,c):
-        print(c)
+
+    # Appending in to the Array
+    for i in range(1,c):
         batchCell = session.findById(f"wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-CHARG[7,{i}]")
-        if batchCell.Text == "" or batchCell.Text == None:
+        if batchCell.Text == "" or batchCell.Text == None:  
             batchCell.setFocus()
             noBatchMat.append(session.findById(f"wnd[0]/usr/subTABLE:SAPLCOWB:0500/tblSAPLCOWBTCTRL_0500/ctxtCOWB_COMP-MATNR[0,{i}]").text)
         else:
             pass
-    print(len(noBatchMat))
+    # Return if there is no btach material
     if len(noBatchMat) > 0:
         return {
-            "status": "No Batch Material Found",
+            "status": "failed",
             "order_number": order_number,
-            "operation": operation,
-            "material" : noBatchMat
+            "operation": operation or process[len(process) - 1],
+            "material" : noBatchMat,
+            "msg" : errorMessage or "Material with no Batch Found"
             }
     try:
         session.findById("wnd[0]/tbar[0]/btn[11]").press()
@@ -176,6 +195,10 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         session.findById("wnd[1]/usr/btnBUTTON_1").press()
         session.findById("wnd[1]/tbar[0]/btn[0]").press()
     except:
-        session.findById("wnd[0]").sendVKey(11)
-        session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
-        session.findById("wnd[1]/usr/btnBUTTON_1").press()
+        pass
+
+    return {
+        "status" : "success",
+        "operation": operation or process_text,
+        "order_number" : order_number
+        }

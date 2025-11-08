@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import time
 import pandas as pd
-
+import sys
 from connectSAP import connect_to_sap
 from ProcessOrder import process_order
 from gotoCode import gotoCO11N
@@ -36,15 +36,16 @@ def process():
 
         message = process_order(order_number, shift, quantity, operation_type, operation)
         return jsonify({
-            "status": "success",
-            "order_number": order_number,
-            "operation": operation,
-            "message": message
-        }), 200
+            "message": message,
+            "operation_type" : operation_type,
+            "shift" : shift,
+            "quantity" : quantity,
+            "msg" : "Order Processed Successfully"
+        }) , 200
 
     except Exception as e:
         print(e)
-        return jsonify({"Error ": "Invalid Order Number"}), 500
+        return jsonify({"Error ": "Invalid Order Number"})
 
 
 @app.route("/getOperations", methods=["POST"])
@@ -60,7 +61,6 @@ def get_operations():
         enterNumber(order_number)
         time.sleep(0.5)
         ops = []
-        count = 0
 
         shell = session.findById("wnd[1]/usr/cntlCUSTOM_CONTAINER/shellcont/shell")
         row_count = shell.RowCount
@@ -103,6 +103,10 @@ def get_operations():
 @app.route("/btchdtr", methods=["POST"])
 def btchDtr():
     try:
+        
+
+        
+        session = connect_to_sap()  # Ensure session is global or passed
         mvmt = '311'
         plant = '1002'
         file =  request.files.get("file")
@@ -122,11 +126,10 @@ def btchDtr():
         recloc = df['Receiving Location'].astype(str).tolist()
         strloc = df['Storage Location'].astype(str).tolist()
 
-        print(f"[INFO] Processing {len(materials)} materials for plant {plant[0]}")
-        filtered_df = df[df['Material'].isin(materials)]
 
-        
-        connect_to_sap()  # Ensure session is global or passed
+        print(f"[INFO] Processing {len(materials)} materials for plant {plant}")
+        filtered_df = df[df['Material'].isin(materials)]
+        print("123154",filtered_df.head())
         session.findById("wnd[0]").maximize()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nMB21"
         session.findById("wnd[0]").sendVKey(0)
@@ -145,6 +148,11 @@ def btchDtr():
 
         session.findById("wnd[0]/usr/ctxtRKPF-UMLGO").text = recloc[0]
         total_materials = len(materials)
+        nanmats = 0
+        if 'nan' or "" in materials:
+            nanmats += 1
+        total_materials -= nanmats
+        print(total_materials)
         batch_size = 14
         idx = 0
         while idx < total_materials:
@@ -153,16 +161,24 @@ def btchDtr():
                 row_offset = row - idx  
                 # SAP row index for this batch (0 to 13)
                 # Iterate through rows, not columns. row_offset is the SAP row index, 7 is the column for Material.
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-MATNR[{row_offset},7]").text = materials[row]
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/txtRESB-ERFMG[{row_offset},48]").text = qty[row]
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-ERFME[{row_offset},66]").text = unit[row]
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-LGORT[{row_offset},76]").text = strloc[row]
-                session.findById('wnd[0]').sendVKey(0)
-                session.findById('wnd[0]').sendVKey(0)
-            
+                if (
+                    str(materials[row]).lower() != 'nan'
+                    and str(qty[row]).lower() != 'nan'
+                    and str(unit[row]).lower() != 'nan'
+                    and str(strloc[row]).lower() != 'nan'
+                    ):
+                    session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-MATNR[{row_offset},7]").text = materials[row] 
+                    print("This: ",materials[row])
+                    session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/txtRESB-ERFMG[{row_offset},48]").text = qty[row]
+                    session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-ERFME[{row_offset},66]").text = unit[row]
+                    session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-LGORT[{row_offset},76]").text = strloc[row]
+                    session.findById('wnd[0]').sendVKey(0)
+                    session.findById('wnd[0]').sendVKey(0)
             session.findById("wnd[0]/tbar[1]/btn[7]").press()
             idx += batch_size
+
             
+        sys.exit()
         session.findById("wnd[0]/tbar[0]/btn[11]").press()
         time.sleep(2)
         status_bar_text = session.findById("wnd[0]/sbar").Text
@@ -184,9 +200,10 @@ def btchDtr():
         }), 200
 
     except Exception as e:
+        print(e)
         return jsonify({
             "status": "error",
-            "error": "SAP not Logged On OR Error while processing details check SAP to validate."
+            "error":  "SAP not Logged On OR Error while processing details check SAP to validate."
         }), 500
 
 
@@ -201,5 +218,5 @@ def ping():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0',debug=True, port=5001) 
+    app.run(host='0.0.0.0',debug=True, port=5001, use_reloader = False) 
  

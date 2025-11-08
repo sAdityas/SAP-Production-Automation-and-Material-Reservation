@@ -3,6 +3,8 @@ body {
   font-family: Arial, sans-serif;
 }
 
+
+
 .container {
   max-width: 400px;
   margin: 40px auto;
@@ -22,7 +24,7 @@ body {
   border-radius: 6px;
   padding: 16px 0;
   
-  transition: background 0.4s, color 0.4s, box-shadow 0.4s;
+  transition: all 0.4s, color 0.4s, box-shadow 0.4s;
 }
 
 .title:hover {

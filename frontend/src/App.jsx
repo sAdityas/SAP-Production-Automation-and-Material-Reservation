@@ -1,6 +1,6 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
-import PrdOrder from './PrdOrder'
+import PrdOrder from './PrdOrder copy'
 import Batch from './Batch'
 
 const App = () => {

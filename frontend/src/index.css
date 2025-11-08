@@ -5,6 +5,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* background: #DBC4A6; */
+  background-image: url("C:/Users/User/Downloads/sunrise-forest-landscape/37123.jpg");
+  background: radial-gradient(circle, rgba(219, 196, 166, 1) 0%,rgba(105, 65, 32, 1) 100%)
 }
 
 code {
