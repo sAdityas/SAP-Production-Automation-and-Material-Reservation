@@ -44,12 +44,13 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
 
 
     """ THIS IS FOR PRODUCTION PURPOSE TO GET OPERATION LIST """
-    # process = []
+    process = []
     for i in range(3,50):
         try:
             time.sleep(0.2)
             shell = session.findById(f"wnd[1]/usr/sub/1[0]/sub/1/2[0]/sub/1/2/15[0,15]/lbl[1,{i}]")
             shell.setFocus()
+            process.append(shell.Text)
             count += 1
         except Exception as e:
             # Element with this index does not exist
@@ -71,7 +72,6 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
             raise ValueError("No operations found in the order.")
         last_row = count
         try:
-            sys.exit()
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").setFocus()
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").caretPosition = 0
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").text = process[len(process) - 1]
