@@ -225,33 +225,36 @@ def btchDtr():
     try:
         mvmt = '311'
         plant = '1002'
-        file =  request.files.get("file")
-        
+        file = request.files.get("file")
+
         if not file:
-            return jsonify({'error':'File is required'}), 400
-        
+            return jsonify({'error': 'File is required'}), 400
+
         if not file.filename.endswith('.csv'):
-            return jsonify({'error': 'Only CSV files are supported',
-                            "status": "success",
-                            "plant": plant}), 400
-        
+            return jsonify({
+                'error': 'Only CSV files are supported',
+                "status": "failed",
+                "plant": plant
+            }), 400
+
         df = pd.read_csv(file)
+
         materials = df['Material'].astype(str).tolist()
-        qty = df['Quantity'].astype(str).tolist() 
-        unit = df['UnE'].astype(str).tolist()
-        recloc = df['Receiving Location'].astype(str).tolist()
-        strloc = df['Storage Location'].astype(str).tolist()
+        qty       = df['Quantity'].astype(str).tolist()
+        unit      = df['UnE'].astype(str).tolist()
+        recloc    = df['Receiving Location'].astype(str).tolist()
+        strloc    = df['Storage Location'].astype(str).tolist()
 
-        print(f"[INFO] Processing {len(materials)} materials for plant {plant[0]}")
-        filtered_df = df[df['Material'].isin(materials)]
+        print(f"[INFO] Processing {len(materials)} materials for plant {plant}")
 
-        
-        connect_to_sap()  # Ensure session is global or passed
+        # Connect to SAP
+        connect_to_sap()
         session.findById("wnd[0]").maximize()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nMB21"
         session.findById("wnd[0]").sendVKey(0)
         time.sleep(0.5)
 
+        # Enter Movement Type & Plant
         mvmtfield = session.findById("wnd[0]/usr/ctxtRM07M-BWART")
         if mvmtfield:
             mvmtfield.text = mvmt
@@ -263,53 +266,100 @@ def btchDtr():
         time.sleep(0.8)
         session.findById("wnd[0]").sendVKey(0)
 
+        # Receiving location for all rows
         session.findById("wnd[0]/usr/ctxtRKPF-UMLGO").text = recloc[0]
+
         total_materials = len(materials)
         batch_size = 14
         idx = 0
+
+        row_errors = []   # store row-level errors
+
+        # ---------------------------
+        #   MAIN ROW INSERT LOOP
+        # ---------------------------
         while idx < total_materials:
             end_idx = min(idx + batch_size, total_materials)
+
             for row in range(idx, end_idx):
-                row_offset = row - idx  # SAP row index for this batch (0 to 13)
-                # Iterate through rows, not columns. row_offset is the SAP row index, 7 is the column for Material.
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-MATNR[{row_offset},7]").text = materials[row]
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/txtRESB-ERFMG[{row_offset},48]").text = qty[row]
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-ERFME[{row_offset},66]").text = unit[row]
-                session.findById(f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-LGORT[{row_offset},76]").text = strloc[row]
-                session.findById('wnd[0]').sendVKey(0)
-                session.findById('wnd[0]').sendVKey(0)
-            
+                row_offset = row - idx  # index inside SAP table (0–13)
+
+                # Build SAP field paths
+                mat_path   = f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-MATNR[{row_offset},7]"
+                qty_path   = f"wnd[0]/usr/sub:SAPMM07R:0521/txtRESB-ERFMG[{row_offset},48]"
+                unit_path  = f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-ERFME[{row_offset},66]"
+                lgort_path = f"wnd[0]/usr/sub:SAPMM07R:0521/ctxtRESB-LGORT[{row_offset},76]"
+
+                try:
+                    # -------------------------------
+                    # TRY FILLING THIS ROW
+                    # -------------------------------
+                    session.findById(mat_path).text = materials[row]
+                    session.findById(qty_path).text = qty[row]
+                    session.findById(unit_path).text = unit[row]
+                    session.findById(lgort_path).text = strloc[row]
+
+                    session.findById("wnd[0]").sendVKey(0)
+                    session.findById("wnd[0]").sendVKey(0)
+
+                except Exception as row_err:
+                    print(f"[ROW ERROR] Row {row} failed: {row_err}")
+
+                    # Try clearing fields before continuing
+                    try:
+                        session.findById(mat_path).text = ""
+                        session.findById(qty_path).text = ""
+                        session.findById(unit_path).text = ""
+                        session.findById(lgort_path).text = ""
+                        session.findById("wnd[0]").sendVKey(0)
+                    except Exception as cleanup_err:
+                        print(f"[WARN] Could not clear row {row}: {cleanup_err}")
+
+                    # Store the failed row
+                    row_errors.append({
+                        "row": row,
+                        "material": materials[row],
+                        "error": str(row_err)
+                    })
+
+                    # Continue without stopping the batch
+                    continue
+
+            # Go to next SAP page
             session.findById("wnd[0]/tbar[1]/btn[7]").press()
             idx += batch_size
 
-
-        
+        # ---------------------------
+        # SAVE DOCUMENT
+        # ---------------------------
         session.findById("wnd[0]/tbar[0]/btn[11]").press()
         time.sleep(2)
-        status_bar_text = session.findById("wnd[0]/sbar").Text
-        
-            
-        words = status_bar_text.split()
-        
-        # Look for the first word that looks like a document number (all digits)
-        for word in words:
-            if word.isdigit() and len(word) >= 10:
-                vf = word
-        message = f"Material reservation created  Document : {vf}"
 
-        return jsonify({
+        status_text = session.findById("wnd[0]/sbar").Text
+        doc_number = None
+
+        for word in status_text.split():
+            if word.isdigit() and len(word) >= 10:
+                doc_number = word
+                break
+
+        message = f"Material reservation created. Document: {doc_number}"
+
+        response = {
             "status": "success",
             "mvmt": mvmt,
             "plant": plant,
-            "message": message
-        }), 200
+            "message": message,
+            "row_errors": row_errors  # Optional — shows which rows failed
+        }
+
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({
             "status": "error",
             "error": str(e)
         }), 500
-
 
 
 

@@ -48,7 +48,7 @@ const PrdOrder = () => {
             const ops = Array.isArray(res.data.operations) ? res.data.operations : [];
             setAvailableOperations(ops);
           })
-          .catch((err) => { setError(err)} )
+          .catch((err) => { setError(err.message)} )
           .finally(() => {
             if (!cancel) {
               setLoading(false);
@@ -105,7 +105,7 @@ const PrdOrder = () => {
       setMaterial(res.data.message.material)
       console.log(res.data)
     } catch (error) {
-      console.error('Error:', error);
+      console.log('Error:', error);
       setError('Something went wrong while processing the request.');
     } finally {
       // Always reset loaders
@@ -113,7 +113,6 @@ const PrdOrder = () => {
       setStatus(false);
     }
   };
-  console.log(material)
   
   const btchDtr = (e) => {
     e.preventDefault();
@@ -213,7 +212,7 @@ const PrdOrder = () => {
       </div>
       <div className='response-container'>
       <span className={`${response?.includes('not') ? 'error' : 'success'}`}>{response ? response : ''}</span>
-      <span className="error">{error ? error : ''}</span>
+      <span className="error">{error ? JSON.stringify(error) : ''}</span>
       </div>
       
     </div>

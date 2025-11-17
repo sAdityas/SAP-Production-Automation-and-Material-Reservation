@@ -7,7 +7,6 @@ session = connect_to_sap()
 def OrderNumber(order_number):
     for _ in range(3):
             try:
-                time.sleep(2)
                 jsonify({'status':"[INFO] Attempting to handle confirmation dialog..."})
                 session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
                 time.sleep(0.5)

@@ -1,7 +1,7 @@
 from connectSAP import connect_to_sap 
 import time
 from flask import jsonify
-
+import sys
 
 from gotoCode import gotoCO11N
 from enterOrderNumber import enterNumber
@@ -25,42 +25,41 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
     time.sleep(0.2)
     
     count = 0
-    process = []
 
+    ''' THIS IS FOR DEVELELOPMENT PURPOSE ONLY TO GET OPERATION LIST '''
     # Getting the Shell to count the rows and get operation
-    shell = session.findById("wnd[1]/usr/cntlCUSTOM_CONTAINER/shellcont/shell")
-    row_count = shell.RowCount
-    print(f"Total rows found: {row_count}")
-    for i in range(row_count):
-        try:
-            time.sleep(0.2)
-            process_text = shell.GetCellValue(i, "F0001") 
-            process.append(process_text)
-            print(f"Row {i}: {process_text}")
-
-        except Exception as e:
-            print(f"Error on row {i}: {e}")
-            continue
-
-
-
-    # process = []
-    # for i in range(50):
+    # shell = session.findById("wnd[1]/usr/cntlCUSTOM_CONTAINER/shellcont/shell")
+    # row_count = shell.RowCount
+    # print(f"Total rows found: {row_count}")
+    # for i in range(row_count):
     #     try:
     #         time.sleep(0.2)
-    #         shell = session.findById(f"wnd[1]/usr/sub/1[0]/sub/1/2[0]/sub/1/2/15[0,15]/lbl[1,{i}]")
-    #         count += 1
-    #         process.append(shell.Text)
+    #         process_text = shell.GetCellValue(i, "F0001") 
+    #         process.append(process_text)
+    #         print(f"Row {i}: {process_text}")
+
     #     except Exception as e:
-    #         # Element with this index does not exist
-    #         print(e)
-    #         break
-    
+    #         print(f"Error on row {i}: {e}")
+    #         continue
+
+
+    """ THIS IS FOR PRODUCTION PURPOSE TO GET OPERATION LIST """
+    # process = []
+    for i in range(3,50):
+        try:
+            time.sleep(0.2)
+            shell = session.findById(f"wnd[1]/usr/sub/1[0]/sub/1/2[0]/sub/1/2/15[0,15]/lbl[1,{i}]")
+            shell.setFocus()
+            count += 1
+        except Exception as e:
+            # Element with this index does not exist
+            break
+
     session.findById("wnd[1]/tbar[0]/btn[12]").press()
         
     # Look for last row
 
-    row_count = count + 1
+    row_count = count
     print(row_count)
     last_row = row_count
     first_row = 0
@@ -70,9 +69,9 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
     if operation_type == 'A':
         if row_count == 0:
             raise ValueError("No operations found in the order.")
-        last_row = count - 1
+        last_row = count
         try:
-            print(process[len(process) - 1])
+            sys.exit()
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").setFocus()
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").caretPosition = 0
             session.findById("wnd[0]/usr/ssubSUB01:SAPLCORU_S:0010/subSLOT_HDR:SAPLCORU_S:0110/ctxtAFRUD-VORNR").text = process[len(process) - 1]
@@ -185,7 +184,7 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
         return {
             "status": "failed",
             "order_number": order_number,
-            "operation": operation or process[len(process) - 1],
+            "operation": operation if operation else None,
             "material" : noBatchMat,
             "msg" : errorMessage or "Material with no Batch Found"
             }
@@ -199,6 +198,6 @@ def process_order(order_number, shift, quantity, operation_type, operation=None)
 
     return {
         "status" : "success",
-        "operation": operation or process_text,
+        "operation": operation if operation else None,
         "order_number" : order_number
         }

@@ -9,6 +9,7 @@ const Batch = () => {
     const [error,setError] = useState('')
     const [response, setResponse] = useState(null);
     const [file, setFile] = useState(null)
+    const [row_errors, setRowErrors] = useState([]);
 
 
     const handleChange = async(e) =>{
@@ -49,7 +50,7 @@ const Batch = () => {
             const formData = new FormData();
             formData.append("file", file);       // CSV file
 
-            const res = await axios.post('http://localhost:5001/btchdtr', formData, {
+            const res = await axios.post('http://192.168.1.24:5001/btchdtr', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
@@ -64,6 +65,7 @@ const Batch = () => {
                     window.location.reload();
                 }
             };
+            setRowErrors(res.data.row_errors || [])
             window.addEventListener('keydown', handleKeyDown, { once: true });
         } catch (err) {
             console.error(err);
@@ -73,45 +75,94 @@ const Batch = () => {
             setLoading(false)
         }
 };
-    return (
-        <div className='container-btch'>
+   return (
+    <div className='container-btch'>
+        
+        {/* If no row errors → show entire form */}
+        {row_errors.length === 0 && (
             <div className='container-form'>
-            <div className='title-container'><h1 className='title'>Material Reservation</h1><p className='breaker'></p></div>
-
-            <div className='file-container'>
-                <div className='fileSelect'>
-                <h2 className='title-csv'>Select a CSV file</h2>
-                <input className="csv-input" type='file' accept='.csv' onChange={handleChange} disabled={loading}/>
+                <div className='title-container'>
+                    <h1 className='title'>Material Reservation</h1>
+                    <p className='breaker'></p>
                 </div>
-                <div className='button-container'>
-                <button type='submit' className={`submit ${loading ? 'submitted' : ''}`} onClick={handleSubmit} disabled={loading}>
-                {loading ? 
-                (
-                <span className='loader'>
-                    <span>.</span>
-                    <span>.</span>
-                    <span>.</span>
-                </span>
-                ):
-                (
-                    <span>Submit</span>
-                )}
 
-                </button>
-                <button className={`back-btn ${loading ? 'loading' : ''}`} onClick={() => window.location.href = '/'} disabled={loading}>Punch In</button>
+                <div className='file-container'>
+                    <div className='fileSelect'>
+                        <h2 className='title-csv'>Select a CSV file</h2>
+                        <input
+                            className="csv-input"
+                            type='file'
+                            accept='.csv'
+                            onChange={handleChange}
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <div className='button-container'>
+                        <button
+                            type='submit'
+                            className={`submit ${loading ? 'submitted' : ''}`}
+                            onClick={handleSubmit}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <span className='loader'>
+                                    <span>.</span><span>.</span><span>.</span>
+                                </span>
+                            ) : (
+                                <span>Submit</span>
+                            )}
+                        </button>
+
+                        <button
+                            className={`back-btn ${loading ? 'loading' : ''}`}
+                            onClick={() => window.location.href = '/'}
+                            disabled={loading}
+                        >
+                            Punch In
+                        </button>
+                    </div>
+
+                    <p className='breaker'></p>
                 </div>
+
                 
-            <p className='breaker'></p>
             </div>
+        )}
+
+        {/* If row errors exist → show table only */}
+        {row_errors.length > 0 && (
+            <div className='error-log-container'>
+                <h2 className='error-log-title'>Error Log</h2>
+
+                <table className='error-log-table'>
+                    <thead>
+                        <tr>
+                            <th>Row</th>
+                            <th>Material</th>
+                            <th>Error</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {row_errors.map((err, index) => (
+                            <tr key={index}>
+                                <td>{err.row + 1}</td>
+                                <td>{err.material}</td>
+                                <td>{err.error}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
                 <div className='res-container'>
-                    <span className={`success ${response ? '' : 'noDis' }`}>{response}</span>
+                    <span className={`success ${response ? '' : 'noDis'}`}>{response}</span>
                     <span className={`error ${error ? '' : 'noDis'}`}>{error}</span>
                 </div>
-                    
+                <button className='error-back-btn' onClick={() => setRowErrors([])}>Back</button>
             </div>
-        </div>
-    )
+        )}
+    </div>
+);
 }
-
 export default Batch 
  
